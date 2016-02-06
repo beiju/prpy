@@ -201,6 +201,49 @@ class VectorFieldPlanner(BasePlanner):
                                       timelimit, **kw_args)
 
     @PlanningMethod
+    def PlanWorkspacePath(self, robot, traj, timelimit=5.0):
+        """
+        Follow a workspace trajectory
+        
+        @param robot
+        @param traj workspace traj
+                    represented as OpenRAVE Affine Trajectory 
+                    TODO: double check if this is what I truly mean
+        @param timelimit time limit before giving up
+        TODO do i need other parameters like other planning methods
+        """
+        manip = robot.GetActiveManipulator()
+
+        def FollowNextPoint():
+            curr_location = manip.GetEndEffectorTransform()
+            
+            # run one-way hausdorff distance to find the point in the 
+            # reference trajectory that is closest to the current location 
+            reference_location = numpy.eye(4) #TODO replace this later
+            perpendicular_error = util.GeodesicTwist(curr_location, reference_location)
+            kp = numpy.eye(6)
+
+            #TODO tune to something reasonable
+            offset = numpy.array([1, 1, 1, 1, 1, 1])
+
+            #Get velocity of reference traj at the reference_location
+            #Use JointStateFromTraj(robot, reference_traj, (time? workspace path is untimed..?), derivatives)
+                #might have to write my own for this that does look up
+            #velocity_parallel = 
+
+            #return velocity_parallel + (kp*offset)
+
+
+        def CompletedTraj():
+            #TODO what is the end condition?
+            #Could get closest point (in reference traj wrt one-way hausdorff)
+            #if the geodesicDistance is is within some tolerable pose error 
+            #then terminate..?
+
+        traj = self.FollowVectorField(robot, FollowNextPoint, CompletedTraj, timelimit)
+        return traj
+
+    @PlanningMethod
     def FollowVectorField(self, robot, fn_vectorfield, fn_terminate,
                           integration_timelimit=10.,
                           timelimit=5.0, dt_multiplier=1.01, **kw_args):
