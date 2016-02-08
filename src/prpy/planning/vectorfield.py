@@ -212,6 +212,7 @@ class VectorFieldPlanner(BasePlanner):
         @param timelimit time limit before giving up
         TODO do i need other parameters like other planning methods
         """
+        from scipy.spatial.distance import cdist
         manip = robot.GetActiveManipulator()
 
         def FollowNextPoint():
@@ -219,7 +220,11 @@ class VectorFieldPlanner(BasePlanner):
             
             # run one-way hausdorff distance to find the point in the 
             # reference trajectory that is closest to the current location 
-            reference_location = numpy.eye(4) #TODO replace this later
+            curr_xyz = curr_location[0:3, 3]
+            #assuming you have list of transforms as the trajectory
+            traj_xyz = [traj[(i*4):(((i+1)*4)-1), 3] for i in xrange(len(traj)/4)]
+
+            reference_location = cdist([curr_xyz], traj_xyz).argmin()
             perpendicular_error = util.GeodesicTwist(curr_location, reference_location)
             kp = numpy.eye(6)
 
